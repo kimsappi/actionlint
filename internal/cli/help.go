@@ -201,6 +201,7 @@ func (a *commandApp) rootHelp(out io.Writer, width int, colored, links bool) {
 		{"Flags", []flagHelp{
 			{"config", "Read configuration from `PATH`"},
 			{"ignore-regex", "Ignore findings matching `RE` (repeatable)"},
+			{"ignore-rule", "Ignore findings from exact rule name `RULE` (repeatable)"},
 			{"json", "Write JSON results"},
 			{"output-format", "Output `FMT`: text, oneline, json, jsonl, sarif, github"},
 			{"output-file", "Write results to `PATH`"},
@@ -239,6 +240,7 @@ func (a *commandApp) legacyHelp(c *cobra.Command) {
   -format TEMPLATE        --template TEMPLATE
   -oneline                --output-format=oneline
   -ignore REGEX           --ignore-regex REGEX (repeatable, matches diagnostic messages)
+  -ignore-rule RULE       --ignore-rule RULE (repeatable, matches exact rule names)
   -config-file PATH       --config PATH
   -init / -init-config    config init
   -completion SHELL       completion SHELL

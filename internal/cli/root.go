@@ -17,15 +17,16 @@ type commandOptions struct {
 }
 
 type commandApp struct {
-	root         *cobra.Command
-	streams      Command
-	inv          invocation
-	opts         commandOptions
-	set          map[string]bool
-	status       int
-	errorJSON    bool
-	helpShown    bool
-	prefixIgnore []string
+	root              *cobra.Command
+	streams           Command
+	inv               invocation
+	opts              commandOptions
+	set               map[string]bool
+	status            int
+	errorJSON         bool
+	helpShown         bool
+	prefixIgnore      []string
+	prefixIgnoreRules []string
 }
 
 type commandUsageError struct{ error }
@@ -271,6 +272,7 @@ func (a *commandApp) checkFlags(c *cobra.Command, modern bool) {
 	a.runnerFlags(f)
 	f.StringArrayVar(&a.inv.Check.IgnoreRegex, "ignore-regex", nil, "Ignore messages matching `REGEX` (repeatable)")
 	f.Var(f.Lookup("ignore-regex").Value, "ignore", "Alias for --ignore-regex")
+	f.StringArrayVar(&a.inv.Check.IgnoreRules, "ignore-rule", nil, "Ignore findings from exact rule name `RULE` (repeatable)")
 	f.StringVarP(&a.opts.output, "output-format", "o", "text", "Output mode: text, oneline, json, jsonl, sarif or github")
 	f.StringVar(&a.opts.output, "output", "text", "Alias for --output-format")
 	f.StringVarP(&a.inv.Render.Template, "template", "f", "", "Render legacy fields with this Go template")
@@ -293,7 +295,7 @@ func (a *commandApp) checkFlags(c *cobra.Command, modern bool) {
 	f.BoolVar(&a.opts.helpLegacy, "help-legacy", false, "Show flag equivalents and argument-parsing rules")
 	f.BoolP("help", "h", false, "Show help")
 	annotateFlag(f, "stdin-filename", "Input")
-	for _, name := range []string{"ignore-regex", "ignore"} {
+	for _, name := range []string{"ignore-regex", "ignore", "ignore-rule"} {
 		annotateFlag(f, name, "Filtering")
 	}
 	for _, name := range []string{"output-format", "output", "template", "format", "template-file", "output-file", "summary", "oneline", "verbose", "debug", "log-level", "color", "no-color"} {
@@ -344,7 +346,7 @@ func (a *commandApp) checkFlags(c *cobra.Command, modern bool) {
 			panic(err)
 		}
 	}
-	for _, name := range []string{"template", "format", "ignore", "ignore-regex"} {
+	for _, name := range []string{"template", "format", "ignore", "ignore-regex", "ignore-rule"} {
 		if err := c.RegisterFlagCompletionFunc(name, cobra.NoFileCompletions); err != nil {
 			panic(err)
 		}
@@ -362,6 +364,9 @@ func (a *commandApp) capture(op operation) func(*cobra.Command, []string) error 
 		c.Flags().Visit(func(f *pflag.Flag) { a.set[f.Name] = true })
 		if check && (c.Flags().Changed("ignore-regex") || c.Flags().Changed("ignore")) {
 			a.inv.Check.IgnoreRegex = append(a.prefixIgnore, a.inv.Check.IgnoreRegex...)
+		}
+		if check && c.Flags().Changed("ignore-rule") {
+			a.inv.Check.IgnoreRules = append(a.prefixIgnoreRules, a.inv.Check.IgnoreRules...)
 		}
 		if check && c.Flags().Changed("color") {
 			a.set["modern-color"] = true

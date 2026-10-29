@@ -164,6 +164,25 @@ func TestEnvironmentFiltersAndLogging(t *testing.T) {
 	}
 }
 
+func TestEnvironmentRuleIgnores(t *testing.T) {
+	t.Setenv("ACTIONLINT_IGNORE_RULE", `["expression-reference"]`)
+	for _, args := range [][]string{{"-"}, {"check", "-"}} {
+		if got := testRunCommand(commandBadWorkflow, args...); got.Status != 0 || got.Stdout+got.Stderr != "" {
+			t.Fatalf("environment rule filter: %+v", got)
+		}
+	}
+	if got := testRunCommand(commandBadWorkflow, "check", "--ignore-rule=not-a-rule", "-"); got.Status != 1 {
+		t.Fatalf("explicit rule filter should replace environment rule filter: %+v", got)
+	}
+	t.Setenv("ACTIONLINT_IGNORE_RULE", "not JSON")
+	if got := testRunCommand(commandGoodWorkflow, "check", "-"); got.Status != 2 || !strings.Contains(got.Stderr, "ACTIONLINT_IGNORE_RULE") {
+		t.Fatalf("invalid environment rule filter should fail: %+v", got)
+	}
+	if got := testRunCommand(commandBadWorkflow, "check", "--ignore-rule=not-a-rule", "-"); got.Status != 1 {
+		t.Fatalf("explicit rule filter should override invalid environment value: %+v", got)
+	}
+}
+
 func TestEnvironmentValidationByOperation(t *testing.T) {
 	t.Setenv("ACTIONLINT_CONFIG", "does-not-exist.yml")
 	t.Setenv("ACTIONLINT_IGNORE_REGEX", "not JSON")

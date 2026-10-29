@@ -17,6 +17,7 @@ import (
 	"actionlint.kjanat.dev/v2/internal/projectpath"
 	"actionlint.kjanat.dev/v2/internal/report"
 	"actionlint.kjanat.dev/v2/internal/resolution"
+	"actionlint.kjanat.dev/v2/internal/rulecatalog"
 	"actionlint.kjanat.dev/v2/internal/tools"
 	"actionlint.kjanat.dev/v2/internal/workspace"
 	"actionlint.kjanat.dev/v2/resolver"
@@ -38,6 +39,7 @@ type Options struct {
 	LoadScriptEngine             func(context.Context, string) (analyzer.ScriptBackend, error)
 	Presets                      repoconfig.Presets
 	IgnorePatterns               []string
+	IgnoreRules                  []string
 	LogWriter                    io.Writer
 	Verbose, Debug, LogSelection bool
 	LegacyErrors                 bool
@@ -92,11 +94,12 @@ func Check(ctx context.Context, options Options, input Input) (result *Result, e
 	if log == nil {
 		log = io.Discard
 	}
+	warnUnknownIgnoreRules(options, log)
 
 	processes := analyzerhost.NewProcessPool(ctx, runtime.NumCPU())
 	engines := analyzerhost.NewScriptEngines(options.LoadScriptEngine)
 	defer func() { processes.Wait(); err = errors.Join(err, engines.Close(context.WithoutCancel(ctx))) }()
-	request := analysisRequest{Processes: processes, Runners: options.Runners, Analyzers: options.Analyzers, ReadFile: options.ReadFile, Tools: options.Tools, RulePresets: options.Presets, LogWriter: log, AllowConfigProcesses: options.AllowConfigProcesses}
+	request := analysisRequest{Processes: processes, Runners: options.Runners, Analyzers: options.Analyzers, ReadFile: options.ReadFile, Tools: options.Tools, RulePresets: options.Presets, IgnoreRules: options.IgnoreRules, LogWriter: log, AllowConfigProcesses: options.AllowConfigProcesses}
 
 	if options.LoadScriptEngine != nil {
 		request.LoadScriptEngine = engines.Load
@@ -114,6 +117,7 @@ func Check(ctx context.Context, options Options, input Input) (result *Result, e
 		request.Sources, request.WorkingDir = input.sources, options.WorkingDir
 		return analyzePrepared(ctx, request)
 	}
+
 	var names []string
 	for _, registration := range options.Analyzers {
 		if registration.Analyzer != nil {
@@ -181,6 +185,32 @@ func Check(ctx context.Context, options Options, input Input) (result *Result, e
 		err = LegacyAnalysisError(err)
 	}
 	return result, err
+}
+
+func warnUnknownIgnoreRules(options Options, log io.Writer) {
+	known := make(map[string]struct{})
+	for _, descriptor := range rulecatalog.Rules() {
+		known[descriptor.Name] = struct{}{}
+	}
+	for _, registration := range options.Analyzers {
+		if registration.Analyzer != nil {
+			known[registration.Analyzer.Descriptor().Name] = struct{}{}
+		}
+	}
+	for _, registration := range options.Tools {
+		known[registration.Descriptor.Name] = struct{}{}
+	}
+	warned := make(map[string]struct{})
+	for _, name := range options.IgnoreRules {
+		if _, ok := known[name]; ok {
+			continue
+		}
+		if _, ok := warned[name]; ok {
+			continue
+		}
+		_, _ = fmt.Fprintf(log, "warning: --ignore-rule %q does not match a registered rule; no findings will be ignored\n", name)
+		warned[name] = struct{}{}
+	}
 }
 
 func emptyRepository(ctx context.Context, directory string) (bool, []string, error) {

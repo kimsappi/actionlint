@@ -221,6 +221,11 @@ nonempty explicit config path. Also available on **config** and **doctor**.
 add patterns. **--ignore** is the
 supported legacy name.
 
+**--ignore-rule** *RULE*
+: Suppress findings from this exact rule name. Repeat to select multiple rules.
+This does not match diagnostic codes or message text. Unknown names produce a
+warning and match no findings.
+
 **--plugin** *PATH*
 : Load a WebAssembly component plugin that implements `kjanat:actionlint/analyzer@0.1.0`
 or `kjanat:actionlint/runner-provider@0.1.0`.
@@ -583,9 +588,9 @@ upgrading actionlint so they reflect the installed CLI. See the usage document f
 : Configuration selection and origin-display defaults. Explicit config flags
 override environment selection. **config init** ignores these defaults.
 
-**ACTIONLINT_STDIN_FILENAME**, **ACTIONLINT_IGNORE_REGEX**
-: Stdin filename and message-filter defaults. The filter value is a JSON string
-array. Explicit ignore flags replace that list.
+**ACTIONLINT_STDIN_FILENAME**, **ACTIONLINT_IGNORE_REGEX**, **ACTIONLINT_IGNORE_RULE**
+: Stdin filename, message-filter and rule-filter defaults. Filter values are JSON
+string arrays. Explicit flags replace their corresponding environment list.
 
 **ACTIONLINT_OUTPUT_FORMAT**, **ACTIONLINT_JSON**, **ACTIONLINT_TEMPLATE**,
 **ACTIONLINT_TEMPLATE_FILE**, **ACTIONLINT_OUTPUT_FILE**

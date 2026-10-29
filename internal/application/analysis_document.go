@@ -53,6 +53,7 @@ type analysisSession struct {
 	reader         *fsread.Reader
 	gitModes       *gitModes
 	ignorePats     repoconfig.IgnorePatterns
+	ignoreRules    []string
 	onRulesCreated func([]workflowvisit.Rule) []workflowvisit.Rule
 	rulePresets    repoconfig.Presets
 }
@@ -128,7 +129,7 @@ func (s *analysisSession) analyzeDocument(path, sourcePath string, content []byt
 		analysisErr = errors.Join(analysisErr, err)
 	}
 	diagnosticpolicy.InferReferences(all, sourcePath, references)
-	policy := diagnosticpolicy.Policy{RuleDescriptors: s.toolDescriptors, Log: s.log, Debug: s.debug, Path: path, ConfigPath: sourcePath, Root: root, WorkingDir: s.workingDir, Content: content, ProjectRoot: projectRoot(project), Config: cfg, ProjectConfig: projectConfig, Metadata: document.Metadata, Presets: s.rulePresets, AdditionalRules: names, IgnorePatterns: s.ignorePats}
+	policy := diagnosticpolicy.Policy{RuleDescriptors: s.toolDescriptors, Log: s.log, Debug: s.debug, Path: path, ConfigPath: sourcePath, Root: root, WorkingDir: s.workingDir, Content: content, ProjectRoot: projectRoot(project), Config: cfg, ProjectConfig: projectConfig, Metadata: document.Metadata, Presets: s.rulePresets, AdditionalRules: names, IgnorePatterns: s.ignorePats, IgnoreRules: s.ignoreRules}
 	all, err = policy.Apply(all, composed.Sources, composed.Configs)
 	if err != nil {
 		return nil, outline, errors.Join(analysisErr, err)

@@ -210,7 +210,7 @@ or use `--plugin-lock FILE` to place a config beside that lock. Management comma
 actionlint --plugin ./pipe-to-shell.wasm --plugin ./no-sudo.wasm
 ```
 
-Each `--plugin` loads one component or a supported core script engine. Analyzer findings carry the plugin name as their rule, so `--ignore-regex`, inline
+Each `--plugin` loads one component or a supported core script engine. Analyzer findings carry the plugin name as their rule, so `--ignore-rule`, `--ignore-regex`, inline
 suppressions and configured ignores apply to them like built-in rules. `--log-level debug` prints the plugin's limits
 when it loads and forwards its log lines, stdout and stderr.
 

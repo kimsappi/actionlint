@@ -193,6 +193,15 @@ func (a *commandApp) checkEnvironment() error {
 			i.Check.IgnoreRegex = patterns
 		}
 	}
+	if !a.anySet("ignore-rule") {
+		if value := os.Getenv("ACTIONLINT_IGNORE_RULE"); value != "" {
+			rules, err := environmentStringArray(value)
+			if err != nil {
+				return commandUsageError{errors.New("ACTIONLINT_IGNORE_RULE must be a JSON array of strings")}
+			}
+			i.Check.IgnoreRules = rules
+		}
+	}
 	return nil
 }
 

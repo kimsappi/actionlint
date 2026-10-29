@@ -29,7 +29,7 @@ func TestRootHelpOverview(t *testing.T) {
 	for _, match := range flags.FindAllStringSubmatch(root.Stderr, -1) {
 		names = append(names, match[1])
 	}
-	want := []string{"strict", "experimental", "config", "ignore-regex", "json", "output-format", "output-file", "quiet", "help", "version"}
+	want := []string{"strict", "experimental", "config", "ignore-regex", "ignore-rule", "json", "output-format", "output-file", "quiet", "help", "version"}
 	if !slices.Equal(names, want) {
 		t.Fatalf("root overview flags = %v, want %v", names, want)
 	}
@@ -52,7 +52,7 @@ func TestRootHelpOverview(t *testing.T) {
 	if check.Status != 0 || metadata.Status != 0 || json.Unmarshal([]byte(metadata.Stdout), &description) != nil {
 		t.Fatalf("full help unavailable: %+v / %+v", check, metadata)
 	}
-	for _, name := range []string{"no-config", "stdin-filename", "template", "hyperlinks", "ruff", "shellcheck", "json-pretty", "help-legacy"} {
+	for _, name := range []string{"no-config", "stdin-filename", "template", "ignore-rule", "hyperlinks", "ruff", "shellcheck", "json-pretty", "help-legacy"} {
 		if !strings.Contains(check.Stderr, name) || !slices.ContainsFunc(description.Flags, func(f commandFlagDescription) bool { return f.Name == name }) {
 			t.Errorf("%s missing from full check help or root JSON metadata", name)
 		}

@@ -30,6 +30,7 @@ See [rule presets](usage.md) for scope and precedence.
 | `ACTIONLINT_CONFIG_ORIGIN`  | `config show --origin`        | Include the source of each config setting. Default: false.                                                  |
 | `ACTIONLINT_STDIN_FILENAME` | `--stdin-filename`            | Filename for stdin diagnostics and project detection. Default: `<stdin>`.                                   |
 | `ACTIONLINT_IGNORE_REGEX`   | `--ignore-regex` / `--ignore` | JSON array of message-filter regexes, such as `["unknown label", "SC2086"]`. Empty or `[]` adds no filters. |
+| `ACTIONLINT_IGNORE_RULE`    | `--ignore-rule`               | JSON array of exact rule names, such as `["script-interpolation"]`. Empty or `[]` adds no filters.           |
 
 Any explicit config-selection flag overrides both `ACTIONLINT_CONFIG` and
 `ACTIONLINT_NO_CONFIG`. Without flags, setting a nonempty config path alongside
@@ -41,13 +42,15 @@ files. Policy settings, runner labels, allowed secrets and variables remain in
 that file; see [Configuration](config.md). `config show --origin` reports the
 origins of values inside the selected file.
 
-Explicit `--ignore` or `--ignore-regex` options replace the environment's entire
-filter list. Repeated explicit options still accumulate as before. These filters
-match diagnostic messages.
+Explicit `--ignore` or `--ignore-regex` options replace the message-filter list;
+explicit `--ignore-rule` options replace the rule-filter list. Repeated explicit
+options still accumulate within their respective lists. Message filters match
+diagnostic messages; rule filters match exact rule names.
 
 ```powershell
 $env:ACTIONLINT_CONFIG = 'C:\Projects\shared-config\actionlint.yaml'
 $env:ACTIONLINT_IGNORE_REGEX = '["SC2086"]'
+$env:ACTIONLINT_IGNORE_RULE = '["script-interpolation"]'
 actionlint check workflow.yml
 actionlint config show --origin
 ```

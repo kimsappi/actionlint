@@ -57,7 +57,7 @@ func executeCheck(ctx context.Context, streams Command, inv checkRequest) (statu
 		WorkingDir:           workingDir, ConfigFile: c.Config.Path,
 		SkipProjectConfig: c.Config.Disabled || (!inv.Legacy && c.Config.Path != ""),
 
-		IgnorePatterns: c.IgnoreRegex, Verbose: c.Verbose && !r.Quiet,
+		IgnorePatterns: c.IgnoreRegex, IgnoreRules: c.IgnoreRules, Verbose: c.Verbose && !r.Quiet,
 		Debug: c.Debug && !r.Quiet, LogWriter: log, LogSelection: inv.Legacy,
 		LegacyErrors: inv.Legacy, Presets: repoconfig.Presets{Strict: c.Strict}, Tools: adapters.Options{
 			ShellCheck: c.ShellCheck, ShellcheckOptions: c.ShellcheckOptions,

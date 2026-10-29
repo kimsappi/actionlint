@@ -40,6 +40,7 @@ type checkInvocation struct {
 	Config                repoconfig.Selection
 	StdinFilename         string
 	IgnoreRegex           []string
+	IgnoreRules           []string
 	ShellCheck            string
 	Ruff                  string
 	RuffOptions           *processconfig.Options

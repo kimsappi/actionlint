@@ -22,6 +22,7 @@ type Policy struct {
 	AdditionalRules                    []string
 	RuleDescriptors                    []rule.Descriptor
 	IgnorePatterns                     repoconfig.IgnorePatterns
+	IgnoreRules                        []string
 	Log                                func(...any)
 	Debug                              func(string, ...any)
 }
@@ -153,13 +154,17 @@ func (p Policy) Apply(all []*findingmodel.Finding, metadataSources map[string][]
 }
 
 func (p Policy) filterErrors(errs []*findingmodel.Finding, cfgs []repoconfig.PathConfig) []*findingmodel.Finding {
-	if len(p.IgnorePatterns) == 0 && len(cfgs) == 0 {
+	if len(p.IgnorePatterns) == 0 && len(p.IgnoreRules) == 0 && len(cfgs) == 0 {
 		return errs
 	}
 
 	filtered := make([]*findingmodel.Finding, 0, len(errs))
 Loop:
 	for _, err := range errs {
+		if slices.Contains(p.IgnoreRules, err.Rule) {
+			p.debug("Finding from rule %q is ignored due to --ignore-rule", err.Rule)
+			continue Loop
+		}
 		if p.IgnorePatterns.Match(err.Message) {
 			p.debug("Error %q is ignored due to -ignore command line option", err.Message)
 			continue Loop
@@ -173,7 +178,7 @@ Loop:
 		filtered = append(filtered, err)
 	}
 	if len(filtered) != len(errs) {
-		p.log("Filtered", len(errs)-len(filtered), "error(s) due to \"-ignore\" command line option and \"ignore\" configuration")
+		p.log("Filtered", len(errs)-len(filtered), "finding(s) due to command-line ignores and ignore configuration")
 	}
 	return filtered
 }

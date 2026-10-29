@@ -240,6 +240,39 @@ func TestCommandNativeJSON(t *testing.T) {
 	}
 }
 
+func TestIgnoreRuleFlag(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		args         []string
+		wantStatus   int
+		wantFindings int
+	}{
+		{"subcommand flag", []string{"check", "--ignore-rule=expression-reference", "--json", "-"}, 0, 0},
+		{"root flag before subcommand", []string{"--ignore-rule=expression-reference", "check", "--json", "-"}, 0, 0},
+		{"exact rule name", []string{"check", "--ignore-rule=expression", "--json", "-"}, 1, 1},
+		{"message regex remains message-only", []string{"check", "--ignore-regex=^expression-reference$", "--json", "-"}, 1, 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := testRunCommand(commandBadWorkflow, tc.args...)
+			var report render.CheckResult
+			if err := json.Unmarshal([]byte(got.Stdout), &report); err != nil {
+				t.Fatalf("invalid JSON result: %v (%+v)", err, got)
+			}
+			if got.Status != tc.wantStatus || len(report.Diagnostics) != tc.wantFindings {
+				t.Fatalf("got status=%d, findings=%d; want status=%d, findings=%d", got.Status, len(report.Diagnostics), tc.wantStatus, tc.wantFindings)
+			}
+		})
+	}
+	known := testRunCommand(commandBadWorkflow, "check", "--ignore-rule=expression-reference", "--summary=false", "-")
+	if known.Status != 0 || known.Stdout != "" || known.Stderr != "" {
+		t.Fatalf("registered rule should be ignored without a warning: %+v", known)
+	}
+	got := testRunCommand(commandBadWorkflow, "check", "--ignore-rule=not-a-rule", "--summary=false", "-")
+	if got.Status != 1 || !strings.Contains(got.Stderr, `warning: --ignore-rule "not-a-rule" does not match a registered rule`) {
+		t.Fatalf("unknown rule should warn without suppressing findings: %+v", got)
+	}
+}
+
 func TestCommandMultiFileJSON(t *testing.T) {
 	t.Chdir(t.TempDir())
 	for _, path := range []string{"one.yml", "two.yml"} {

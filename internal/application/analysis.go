@@ -51,6 +51,7 @@ type analysisRequest struct {
 	Analyzers            []analyzer.Registration
 	Tools                []tools.Registration
 	IgnorePatterns       repoconfig.IgnorePatterns
+	IgnoreRules          []string
 	OnRulesCreated       func([]workflowvisit.Rule) []workflowvisit.Rule
 	WorkingDir           string
 	ReadFile             func(string) ([]byte, error)
@@ -195,7 +196,7 @@ func run(ctx context.Context, request analysisRequest, log io.Writer, level LogL
 		runners:   request.Runners,
 		analyzers: request.Analyzers, ctx: ctx, toolDescriptors: extensions,
 		tools: request.Tools, loadScriptEngine: request.LoadScriptEngine, rulePresets: request.RulePresets, allowConfigProcesses: request.AllowConfigProcesses,
-		ignorePats: request.IgnorePatterns, onRulesCreated: request.OnRulesCreated, analysisLogger: logger,
+		ignorePats: request.IgnorePatterns, ignoreRules: request.IgnoreRules, onRulesCreated: request.OnRulesCreated, analysisLogger: logger,
 	}
 
 	documents := &actionDocuments{byPath: map[string]documentmodel.Action{}}
